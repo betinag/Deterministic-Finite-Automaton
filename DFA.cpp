@@ -88,10 +88,10 @@ ostream& operator<<(ostream& out, DFA const& dfa) {
 	out << endl;
 
 	out << "5.Configurations: " << endl;
-	Element* tmp = dfa.start;
-	while(tmp != NULL) {
-		out << "(" << tmp->state1 << ","<< tmp->symbol <<"," <<tmp->state2 << ")" <<endl;
-		tmp = tmp->link;
+	Element* tempElement = dfa.start;
+	while(tempElement != NULL) {
+		out << "(" << tempElement->state1 << ","<< tempElement->symbol <<"," << tempElement->state2 << ")" <<endl;
+		tempElement = tempElement->link;
 	}
 	out << endl;
 	return out;
@@ -107,12 +107,12 @@ void DFA::addConfig(string st1, char sym, string st2) {
 	}
 	else {
 		if(start != NULL) {
-			Element* tmp = new Element;
-			tmp->state1 = st1;
-			tmp->symbol = sym;
-			tmp->state2 = st2;
-			tmp->link = start;
-			start = tmp;
+			Element* tempElement = new Element;
+			tempElement->state1 = st1;
+			tempElement->symbol = sym;
+			tempElement->state2 = st2;
+			tempElement->link = start;
+			start = tempElement;
 		}
 	}
 }
@@ -127,6 +127,7 @@ void DFA::addError() {
 		}
 	}
 }
+
 DFA::DFA(DFA const& df) {
 	int i = 0;
 	this->start = NULL;
@@ -135,10 +136,10 @@ DFA::DFA(DFA const& df) {
 	numberOfFinalStates = df.numberOfFinalStates;
 	numberOfStartingStates = df.numberOfStartingStates;
 
-	Element* tmp = df.start;
-	while(tmp != NULL) {
-		addConfig(tmp->state1, tmp->symbol, tmp->state2);
-		tmp = tmp->link;
+	Element* tempElement = df.start;
+	while(tempElement != NULL) {
+		addConfig(tempElement->state1, tempElement->symbol, tempElement->state2);
+		tempElement = tempElement->link;
 	}
 
 	startingState = new string[numberOfStartingStates];
@@ -163,12 +164,12 @@ DFA::DFA(DFA const& df) {
 }
 
 bool DFA::checkConfig(string state, char sym) {
-	Element* tmp = start;
-	while(tmp != NULL && (sym != tmp->symbol || tmp->state1.compare(state) != 0)) {
-		tmp = tmp->link;
+	Element* tempElement = start;
+	while(tempElement != NULL && (sym != tempElement->symbol || tempElement->state1.compare(state) != 0)) {
+		tempElement = tempElement->link;
 	}
 
-	if(tmp == NULL) {
+	if(tempElement == NULL) {
 		return true;
 	}
 	else  {
@@ -178,17 +179,17 @@ bool DFA::checkConfig(string state, char sym) {
 
 bool DFA::execute(string input) {
 	/* Looking for a starting symbol */
-	Element* tmp = start;
-	string temporary;
-	while(tmp != NULL && (tmp->state1.compare(startingState[0]) != 0 || tmp->symbol != input[0])) {
-		tmp = tmp->link;
+	Element* tempElement = start;
+	string temporaryState;
+	while(tempElement != NULL && (tempElement->state1.compare(startingState[0]) != 0 || tempElement->symbol != input[0])) {
+		tempElement = tempElement->link;
 	}
 
-	if(tmp == NULL) {
+	if(tempElement == NULL) {
 		return false;
 	}
 	else {
-		temporary = tmp->state2;
+		temporaryState = tempElement->state2;
 	}
 
 	char c;
@@ -196,24 +197,24 @@ bool DFA::execute(string input) {
 	int size = input.size();
 	while(i < size) {
 		c = input[i];
-		tmp = start;
-		while(tmp != NULL && (tmp->state1.compare(temporary) != 0 || tmp->symbol != c)) {
-			tmp = tmp->link;
+		tempElement = start;
+		while(tempElement != NULL && (tempElement->state1.compare(temporaryState) != 0 || tempElement->symbol != c)) {
+			tempElement = tempElement->link;
 		}
 
-		if(tmp == NULL) {
+		if(tempElement == NULL) {
 			return false;
 		}
 
 		else {
-			temporary = tmp->state2;
+			temporaryState = tempElement->state2;
 			i++;
 		}
 	}
 
 	/* Check if temporary is a final state */
 	int j = 0;
-	while(j < numberOfFinalStates && temporary.compare(finalStates[j]) != 0 ) {
+	while(j < numberOfFinalStates && temporaryState.compare(finalStates[j]) != 0 ) {
 		j++;
 	}
 
@@ -225,16 +226,16 @@ bool DFA::execute(string input) {
 		return true;
 	}
 }
-		
-string DFA::transFunc(string st, string sub) {
-	Element* tmp = start;
-	string temporary;
+
+string DFA::transFunc(string state, string sub) {
+	Element* tmpElement = start;
+	string temporaryState;
 	int i = 0;
-	while(tmp != NULL && (tmp->state1.compare(st) != 0 || tmp->symbol != sub[i])) {
-		tmp = tmp->link;
+	while(tmpElement != NULL && (tmpElement->state1.compare(state) != 0 || tmpElement->symbol != sub[i])) {
+		tmpElement = tmpElement->link;
 	}
 
-	if(tmp == NULL) {
+	if(tmpElement == NULL) {
 		return "error";
 	}
 	else {
@@ -243,34 +244,33 @@ string DFA::transFunc(string st, string sub) {
 
 	char c;
 	int size = sub.size();
-	temporary = tmp->state2;
+	temporaryState = tmpElement->state2;
 	while(i < size) {
 		c = sub[i];
-		tmp = start;
-
-		while(tmp != NULL && (tmp->symbol != c || tmp->state1.compare(temporary) != 0)) {
-			tmp = tmp->link;
+		tmpElement = start;
+		while((tmpElement != NULL && (tmpElement->symbol != c) || (tmpElement->state1.compare(temporaryState) != 0))) {
+			tmpElement = tmpElement->link;
 		}
 
-		if(tmp == NULL) {
+		if(tmpElement == NULL) {
 			 return "error";
 		}
 		else {
-			temporary = tmp->state2;
+			temporaryState = tmpElement->state2;
 			i++;
 		}
 	}
 
-	return temporary;
+	return temporaryState;
 }
 
 bool DFA::checkSymbol(char sym) {
-	Element* tmp = start;
-	while(tmp != NULL && tmp->symbol != sym) {
-		tmp = tmp->link;
+	Element* tmpElement = start;
+	while(tmpElement != NULL && tmpElement->symbol != sym) {
+		tmpElement = tmpElement->link;
 	}
 	
-	if(tmp == NULL) { 
+	if(tmpElement == NULL) { 
 		return false;
 	}
 
@@ -280,9 +280,9 @@ bool DFA::checkSymbol(char sym) {
 DFA::~DFA() {
 	/* Delete configurations */
 	while(start != NULL) {
-		Element* tmp = start;
+		Element* tmpElement = start;
 		start = start->link;
-		delete tmp;
+		delete tmpElement;
 	}
 
 	delete[] startingState;
@@ -317,7 +317,6 @@ DFA Union(DFA const& df1, DFA& df2) {
 	}
 
 	newDFA.states[newDFA.numberOfStates-1] = newDFA.startingState[0]; /* Add new starting state */
-
 	newDFA.numberOfFinalStates = df1.numberOfFinalStates + df2.numberOfFinalStates + 1; /* Final states handling */
 	newDFA.finalStates = new string[newDFA.numberOfFinalStates];
 
@@ -330,46 +329,45 @@ DFA Union(DFA const& df1, DFA& df2) {
 	for(j = 0; j < df2.numberOfFinalStates; j++) {
 		newDFA.finalStates[k++] = df2.finalStates[j];
 	}
-	
+
 	/* Add the new configurations */
-	Element* tmp1 = df1.start;
-	while(tmp1 != NULL) {
+	Element* tempElement = df1.start;
+	while(tempElement != NULL) {
 		if(!tmp1->state1.compare(df1.startingState[0])) {
-			newDFA.addConfig(newDFA.startingState[0], tmp1->symbol, tmp1->state2);
+			newDFA.addConfig(newDFA.startingState[0], tempElement->symbol, tempElement->state2);
 		}
-		tmp1 = tmp1->link;
+		tempElement = tempElement->link;
 	}
 
-	tmp1 = df2.start;
-	while(tmp1 != NULL) {
-		if(tmp1->state1.compare(df2.startingState[0]) == 0) {
-			newDFA.addConfig(newDFA.startingState[0], tmp1->symbol, tmp1->state2);
+	tempElement = df2.start;
+	while(tempElement != NULL) {
+		if(tempElement->state1.compare(df2.startingState[0]) == 0) {
+			newDFA.addConfig(newDFA.startingState[0], tempElement->symbol, tempElement->state2);
 		}
-		tmp1 = tmp1->link;
+		tempElement = tempElement->link;
 	}
 
-	Element* temp = df1.start;
-	while(temp! = NULL) {
-		newDFA.addConfig(temp->state1, temp->symbol, temp->state2);
-		temp = temp->link;
+	tempElement = df1.start;
+	while(tempElement ! = NULL) {
+		newDFA.addConfig(tempElement->state1, tempElement->symbol, tempElement->state2);
+		tempElement = tempElement->link;
 	}
 
-	Element* temp2 = df2.start;
-	while(temp2 != NULL) {
-		newDFA.addConfig(temp2->state1, temp2->symbol, temp2->state2);
-		temp2 = temp2->link;
+	tempElement = df2.start;
+	while(tempElement != NULL) {
+		newDFA.addConfig(tempElement->state1, tempElement->symbol, tempElement->state2);
+		tempElement = tempElement->link;
 	}
 
 	return newDFA;
-
 }
 
-DFA interSection(DFA const& d1, DFA const& d2){
+DFA interSection(DFA const& d1, DFA const& d2) {
+	int k = 0, i, j;
 	DFA newDFA;
 	newDFA.numberOfStates = d1.numberOfStates * d2.numberOfStates;
 	newDFA.states = new string[newDFA.numberOfStates];
-	int k = 0, i = 0, j;
-	for(; i < d1.numberOfStates; i++) {
+	for(i = 0; i < d1.numberOfStates; i++) {
 		for(j = 0; j < d2.numberOfStates; j++) {
 			newDFA.states[k++] = d1.states[i] + d2.states[j];
 		}
@@ -384,7 +382,6 @@ DFA interSection(DFA const& d1, DFA const& d2){
 	newDFA.numberOfStartingStates = 1;
 	newDFA.startingState = new string[newDFA.numberOfStartingStates];
 	newDFA.startingState[0] = d1.startingState[0] + d2.startingState[0];
-	
 	newDFA.numberOfFinalStates = d1.numberOfFinalStates * d2.numberOfFinalStates;
 	newDFA.finalStates = new string[newDFA.numberOfFinalStates];
 	k = 0;
@@ -393,33 +390,32 @@ DFA interSection(DFA const& d1, DFA const& d2){
 			newDFA.finalStates[k++] = d1.finalStates[i] + d2.finalStates[j];
 		}
 	}
-	
+
 	/* Add configurations */
-	Element* temp = d1.start;
-	while(temp != NULL) {
-		Element* temp1 = d2.start;
-		while(temp1 != NULL) {   
-			if(temp->symbol == temp1->symbol) {
-				newDFA.addConfig(temp->state1 + temp1->state1, temp->symbol, temp->state2 + temp1->state2);
+	Element* tempElement1 = d1.start, tempElement2;
+	while(tempElement1 != NULL) {
+		tempElement2 = d2.start;
+		while(tempElement2 != NULL) {   
+			if(tempElement1->symbol == tempElement2->symbol) {
+				newDFA.addConfig(tempElement1->state1 + tempElement2->state1, tempElement1->symbol, tempElement1->state2 + tempElement2->state2);
 			}
-			temp1=temp1->link;
+			tempElement2=tempElement2->link;
 		}
 
-		temp = temp->link;	
+		tempElement1 = tempElement1->link;	
 	}
 
 	return newDFA;
 }
 
-DFA DFA::complementation(){
+DFA DFA::complementation() {
 	int i, j;
-	this->addError();
 	DFA newDFA;
 
+	this->addError();
 	newDFA.numberOfStartingStates = numberOfStartingStates;
 	newDFA.startingState = new string[numberOfStartingStates];
 	newDFA.startingState[0] = startingState[0];
-
 	newDFA.numberOfSymbols = numberOfSymbols;
 	newDFA.alphabet = new char[numberOfSymbols];
 	for(i = 0; i < numberOfSymbols; i++) {
@@ -427,13 +423,12 @@ DFA DFA::complementation(){
 	}
 
 	/* Add configurations */
-	Element* tmp = start;
-	while(tmp != NULL) {
-		newDFA.addConfig(tmp->state1, tmp->symbol, tmp->state2);
-		tmp = tmp->link;
+	Element* tempElement = start;
+	while(tempElement != NULL) {
+		newDFA.addConfig(tempElement->state1, tempElement->symbol, tempElement->state2);
+		tempElement = tempElement->link;
 	}
 
-	
 	/* States handling */
 	newDFA.numberOfStates = numberOfStates + 1;
 	newDFA.states = new string[newDFA.numberOfStates];
@@ -446,7 +441,6 @@ DFA DFA::complementation(){
 	int k = 0;
 	newDFA.numberOfFinalStates = numberOfStates - numberOfFinalStates + 1;
 	newDFA.finalStates = new string[newDFA.numberOfFinalStates];
-
 	for(i = 0; i < numberOfStates; i++) {
 		j = 0;
 		while(j < numberOfFinalStates && states[i] != finalStates[j]) {
@@ -462,35 +456,4 @@ DFA DFA::complementation(){
 	newDFA.finalStates[numberOfStates - numberOfFinalStates] = "err";
 
 	return newDFA;
-}
-
-int main() {
-	DFA automaton;
-	int size, iter = 0;
-	char symbol;
-	string state1, state2;
-
-
-	automaton.setAlphabet();
-	automaton.setStates();
-	automaton.setStartingState();
-	automaton.setFinal();
-	cout << automaton;
-
-	cout << "Please insert configurations.\n";
-	cout << "Configurations: ";
-	cin >> size;
-	while(iter < size) {
-		cout << "State: ";
-		cin >> state1;
-		cout << "\nSymbol: ";
-		cin >> symbol;
-		cout<<"\nState: ";
-		cin >> state2;
-		cout << endl;
-		automaton.addConfig(state1, symbol, state2);
-		iter++;
-	}
-
-	return 0;
 }
